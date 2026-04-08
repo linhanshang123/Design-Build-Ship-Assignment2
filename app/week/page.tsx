@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { ReflectionEditor, SectionCard, WeekStrip } from "@/components/planner-cards";
 import { usePlanner } from "@/lib/planner-context";
 import {
+  addWeeks,
   formatDisplayDate,
-  getPreviousWeekStart,
   getToday,
   getWeekDates,
+  startOfWeek,
 } from "@/lib/planner-utils";
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -20,23 +22,46 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 
 export default function WeekPage() {
   const today = getToday();
-  const currentWeekDates = getWeekDates(today);
-  const previousWeekStart = getPreviousWeekStart(today);
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() => startOfWeek(today));
+  const currentWeekDates = getWeekDates(selectedWeekStart);
   const { getWeekSummary } = usePlanner();
-  const summary = getWeekSummary(previousWeekStart);
+  const summary = getWeekSummary(selectedWeekStart);
 
   return (
     <div className="space-y-6">
       <SectionCard
         title="This Week"
-        subtitle="A seven-day strip for what is coming next and where the load sits."
+        subtitle={`A seven-day strip for the week starting ${formatDisplayDate(selectedWeekStart)}.`}
       >
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setSelectedWeekStart((current) => addWeeks(current, -1))}
+            className="rounded-full border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-2 text-sm hover:border-[var(--accent)]"
+          >
+            ← Last week
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedWeekStart(startOfWeek(today))}
+            className="rounded-full border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-2 text-sm hover:border-[var(--accent)]"
+          >
+            This week
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedWeekStart((current) => addWeeks(current, 1))}
+            className="rounded-full border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-2 text-sm hover:border-[var(--accent)]"
+          >
+            Next week →
+          </button>
+        </div>
         <WeekStrip dates={currentWeekDates} />
       </SectionCard>
 
       <SectionCard
-        title="Last Week Summary"
-        subtitle={`Automatic stats and a short reflection for the week starting ${formatDisplayDate(previousWeekStart)}.`}
+        title="Week Summary"
+        subtitle={`Automatic stats and a short reflection for the week starting ${formatDisplayDate(selectedWeekStart)}.`}
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Planned items" value={summary.plannedCount} />
@@ -45,7 +70,7 @@ export default function WeekPage() {
           <StatCard label="Priority completion" value={`${summary.priorityRate}%`} />
         </div>
         <div className="mt-5">
-          <ReflectionEditor weekStart={previousWeekStart} />
+          <ReflectionEditor weekStart={selectedWeekStart} />
         </div>
       </SectionCard>
     </div>

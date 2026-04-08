@@ -6,23 +6,26 @@ import {
   DayNotesEditor,
   PlannerList,
   SectionCard,
+  TimeBlockTimeline,
 } from "@/components/planner-cards";
 import { usePlanner } from "@/lib/planner-context";
-import { formatDisplayDate } from "@/lib/planner-utils";
+import { formatDisplayDate, getToday } from "@/lib/planner-utils";
 
 export function DayPageClient({ date }: { date: string }) {
   const { getItemsForDate } = usePlanner();
+  const today = getToday();
   const items = getItemsForDate(date);
-  const priorityItems = items.filter((item) => item.priority === "priority");
-  const secondaryItems = items.filter((item) => item.priority === "secondary");
+  const dayItems = items;
+  const timeBlocks = items.filter((item) => item.kind === "time-block");
+  const showLiveTimeline = date === today;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
-      <div className="space-y-6">
-        <SectionCard
-          title={formatDisplayDate(date)}
-          subtitle="A focused view of everything planned for this day."
-        >
+    <div className="space-y-6">
+      <SectionCard
+        title={formatDisplayDate(date)}
+        subtitle="A focused view of everything planned for this day."
+      >
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CheckInBadge date={date} />
             <Link
@@ -32,37 +35,36 @@ export function DayPageClient({ date }: { date: string }) {
               Add another item
             </Link>
           </div>
-        </SectionCard>
 
-        <SectionCard
-          title="Priority Items"
-          subtitle="Complete all of these to mark the day as checked in."
-        >
-          <PlannerList
-            items={priorityItems}
-            emptyLabel="No priority items planned for this day yet."
-          />
-        </SectionCard>
+          <div>
+            <p className="mb-3 text-sm text-[var(--muted)]">
+              Everything on this day, with priority items shown first. Time-block
+              events can also be checked off here.
+            </p>
+            <PlannerList
+              items={dayItems}
+              todayDate={today}
+              emptyLabel="No items planned for this day yet."
+            />
+          </div>
+        </div>
+      </SectionCard>
 
+      {showLiveTimeline ? (
         <SectionCard
-          title="Secondary Items"
-          subtitle="Useful work, errands, and lighter tasks."
+          title="Today Timeline"
+          subtitle="A live view of today's time blocks using your local browser time."
         >
-          <PlannerList
-            items={secondaryItems}
-            emptyLabel="No secondary items planned for this day yet."
-          />
+          <TimeBlockTimeline date={date} items={timeBlocks} />
         </SectionCard>
-      </div>
+      ) : null}
 
-      <div className="space-y-6">
-        <SectionCard
-          title="Daily Notes"
-          subtitle="Use this space for constraints, intentions, or a short reflection."
-        >
-          <DayNotesEditor date={date} />
-        </SectionCard>
-      </div>
+      <SectionCard
+        title="Daily Notes"
+        subtitle="Use this space for constraints, intentions, or a short reflection."
+      >
+        <DayNotesEditor date={date} />
+      </SectionCard>
     </div>
   );
 }
