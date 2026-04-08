@@ -22,19 +22,32 @@ export type WeeklyReflection = {
   text: string;
 };
 
+const plannerTimeZone = "America/Chicago";
+
 export const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
+  timeZone: "UTC",
 });
 
 export const longDateFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "long",
   month: "long",
   day: "numeric",
+  timeZone: "UTC",
+});
+
+export const longDateWithYearFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
 });
 
 export const shortTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
+  timeZone: plannerTimeZone,
 });
 
 export function formatDateInput(date: Date) {
@@ -47,6 +60,11 @@ export function formatDateInput(date: Date) {
 export function parseDateInput(date: string) {
   const [year, month, day] = date.split("-").map(Number);
   return new Date(year, month - 1, day);
+}
+
+function parseDateInputForDisplay(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12));
 }
 
 export function parseTimeToMinutes(time: string) {
@@ -62,7 +80,18 @@ export function setDateTime(date: string, time: string) {
 }
 
 export function getToday() {
-  return formatDateInput(new Date());
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: plannerTimeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+
+  return `${year}-${month}-${day}`;
 }
 
 export function addDays(date: string, amount: number) {
@@ -93,33 +122,34 @@ export function getPreviousWeekStart(baseDate: string) {
 }
 
 export function formatDisplayDate(date: string) {
-  return longDateFormatter.format(parseDateInput(date));
+  return longDateFormatter.format(parseDateInputForDisplay(date));
 }
 
 export function formatWeekday(date: string) {
-  return weekdayFormatter.format(parseDateInput(date));
+  return weekdayFormatter.format(parseDateInputForDisplay(date));
 }
 
 export function formatDisplayDateWithYear(date: string) {
-  return parseDateInput(date).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return longDateWithYearFormatter.format(parseDateInputForDisplay(date));
 }
 
 export function formatClockTime(date: Date) {
   return shortTimeFormatter.format(date);
 }
 
+function formatTimeOfDay(time: string) {
+  const [rawHours, rawMinutes] = time.split(":").map(Number);
+  const suffix = rawHours >= 12 ? "PM" : "AM";
+  const hours = rawHours % 12 || 12;
+  return `${hours}:${`${rawMinutes}`.padStart(2, "0")} ${suffix}`;
+}
+
 export function formatTimeRange(startTime: string, endTime?: string) {
-  const baseDate = "2026-01-01";
-  const start = formatClockTime(setDateTime(baseDate, startTime));
+  const start = formatTimeOfDay(startTime);
   if (!endTime) {
     return start;
   }
-  return `${start} - ${formatClockTime(setDateTime(baseDate, endTime))}`;
+  return `${start} - ${formatTimeOfDay(endTime)}`;
 }
 
 export function formatDurationFromMinutes(totalMinutes: number) {

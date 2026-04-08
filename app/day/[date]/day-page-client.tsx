@@ -9,15 +9,17 @@ import {
   TimeBlockTimeline,
 } from "@/components/planner-cards";
 import { usePlanner } from "@/lib/planner-context";
-import { formatDisplayDate, getToday } from "@/lib/planner-utils";
+import { useTheme } from "@/lib/theme-context";
+import { formatDisplayDate } from "@/lib/planner-utils";
 
-export function DayPageClient({ date }: { date: string }) {
+export function DayPageClient({ date, today }: { date: string; today: string }) {
   const { getItemsForDate } = usePlanner();
-  const today = getToday();
+  const { theme } = useTheme();
   const items = getItemsForDate(date);
   const dayItems = items;
   const timeBlocks = items.filter((item) => item.kind === "time-block");
   const showLiveTimeline = date === today;
+  const actionButtonStyle = theme === "moon" ? { color: "#fff4e7" } : undefined;
 
   return (
     <div className="space-y-6">
@@ -30,7 +32,8 @@ export function DayPageClient({ date }: { date: string }) {
             <CheckInBadge date={date} />
             <Link
               href="/new"
-              className="rounded-full border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-2 text-sm hover:border-[var(--accent)]"
+              className="planner-button planner-ui rounded-full px-4 py-2 text-sm"
+              style={actionButtonStyle}
             >
               Add another item
             </Link>

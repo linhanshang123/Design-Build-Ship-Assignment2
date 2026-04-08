@@ -40,8 +40,7 @@ type PlannerContextValue = {
 
 const PlannerContext = createContext<PlannerContextValue | null>(null);
 
-function createSeedItems() {
-  const today = getToday();
+function createSeedItems(today: string) {
   const tomorrow = addDays(today, 1);
   const dayAfter = addDays(today, 2);
 
@@ -101,17 +100,17 @@ function createSeedItems() {
   ]);
 }
 
-function createSeedDayNotes(): DayNote[] {
+function createSeedDayNotes(today: string): DayNote[] {
   return [
     {
-      date: getToday(),
+      date: today,
       text: "Keep the day realistic. Finish the top priorities first, then pick up the smaller items.",
     },
   ];
 }
 
-function createSeedReflection(): WeeklyReflection[] {
-  const previousWeek = getPreviousWeekStart(getToday());
+function createSeedReflection(today: string): WeeklyReflection[] {
+  const previousWeek = getPreviousWeekStart(today);
   return [
     {
       weekStart: previousWeek,
@@ -120,11 +119,17 @@ function createSeedReflection(): WeeklyReflection[] {
   ];
 }
 
-export function PlannerProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<PlannerItem[]>(() => createSeedItems());
-  const [dayNotes, setDayNotes] = useState<DayNote[]>(() => createSeedDayNotes());
+export function PlannerProvider({
+  children,
+  today,
+}: {
+  children: ReactNode;
+  today: string;
+}) {
+  const [items, setItems] = useState<PlannerItem[]>(() => createSeedItems(today));
+  const [dayNotes, setDayNotes] = useState<DayNote[]>(() => createSeedDayNotes(today));
   const [weeklyReflections, setWeeklyReflections] = useState<WeeklyReflection[]>(() =>
-    createSeedReflection(),
+    createSeedReflection(today),
   );
 
   const value = useMemo<PlannerContextValue>(

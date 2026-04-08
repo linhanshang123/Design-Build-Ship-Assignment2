@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { DayPageClient } from "@/app/day/[date]/day-page-client";
-import { parseDateInput } from "@/lib/planner-utils";
+import { getToday, parseDateInput } from "@/lib/planner-utils";
 
 export default async function DayPage({
   params,
@@ -13,5 +13,5 @@ export default async function DayPage({
     notFound();
   }
 
-  return <DayPageClient date={date} />;
+  return <DayPageClient date={date} today={getToday()} />;
 }

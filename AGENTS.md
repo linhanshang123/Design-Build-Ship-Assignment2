@@ -39,3 +39,6 @@ Create a lightweight multi-page planner that helps a user manage tasks and notes
 - Do not over-engineer
 - Prefer polish over adding extra features
 - Suggest commits, but do not auto-commit unless asked
+
+## Style exploration focus
+Explore new visual directions while keeping the existing route structure and interactions intact.

@@ -30,10 +30,10 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_12px_40px_rgba(61,44,32,0.05)] backdrop-blur">
+    <section className="planner-panel rounded-[1.75rem] p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl">{title}</h2>
+          <h2 className="planner-title text-xl">{title}</h2>
           {subtitle ? (
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{subtitle}</p>
           ) : null}
@@ -83,7 +83,7 @@ export function PlannerList({
   todayDate?: string;
 }) {
   const { toggleItem } = usePlanner();
-  const now = useMinuteClock();
+  const now = useMinuteClock(todayDate ?? "2026-01-01");
 
   if (items.length === 0) {
     return (
@@ -131,12 +131,12 @@ export function PlannerList({
                   className={`rounded-full px-2 py-1 text-xs uppercase tracking-[0.18em] ${
                     item.priority === "priority"
                       ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "bg-stone-200 text-stone-600"
+                      : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
                   }`}
                 >
                   {item.priority}
                 </span>
-                <span className="rounded-full bg-white/80 px-2 py-1 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+                <span className="planner-ui rounded-full border border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
                   {item.kind === "time-block" ? "time block" : "task"}
                 </span>
               </div>
@@ -152,7 +152,7 @@ export function PlannerList({
                       className={`rounded-full px-2 py-1 text-xs ${
                         liveStatus.state === "active"
                           ? "bg-[var(--success-soft)] text-[var(--success)]"
-                          : "bg-stone-200 text-stone-600"
+                          : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
                       }`}
                     >
                       {liveStatus.label}
@@ -168,8 +168,12 @@ export function PlannerList({
   );
 }
 
-export function useMinuteClock() {
-  const [now, setNow] = useState(() => new Date());
+export function useMinuteClock(baseDate = "2026-01-01") {
+  const [now, setNow] = useState(() => {
+    const anchor = parseDateInput(baseDate);
+    anchor.setHours(12, 0, 0, 0);
+    return anchor;
+  });
 
   useEffect(() => {
     const refresh = () => setNow(new Date());
@@ -266,14 +270,8 @@ function clampOverlay(left: number, top: number) {
   const viewportWidth = typeof window === "undefined" ? 1280 : window.innerWidth;
   const viewportHeight = typeof window === "undefined" ? 720 : window.innerHeight;
 
-  const nextLeft = Math.min(
-    Math.max(margin, left),
-    viewportWidth - width - margin,
-  );
-  const nextTop = Math.min(
-    Math.max(margin, top),
-    viewportHeight - height - margin,
-  );
+  const nextLeft = Math.min(Math.max(margin, left), viewportWidth - width - margin);
+  const nextTop = Math.min(Math.max(margin, top), viewportHeight - height - margin);
 
   return { left: nextLeft, top: nextTop };
 }
@@ -285,7 +283,7 @@ export function TimeBlockTimeline({
   date: string;
   items: PlannerItem[];
 }) {
-  const now = useMinuteClock();
+  const now = useMinuteClock(date);
   const { items: laneItems, laneCount } = buildTimelineLanes(items);
   const isToday = date === formatDateInput(now);
   const hourMarks = [0, 4, 8, 12, 16, 20, 24];
@@ -304,26 +302,34 @@ export function TimeBlockTimeline({
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3 rounded-[1.4rem] border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+          <p
+            className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]"
+            suppressHydrationWarning
+          >
             {isToday ? "Live Timeline" : "Schedule"}
           </p>
           <p className="mt-2 text-lg">{formatDisplayDateWithYear(date)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+          <p
+            className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]"
+            suppressHydrationWarning
+          >
             {isToday ? "Local time" : "Reference"}
           </p>
-          <p className="mt-2 text-lg">{formatClockTime(now)}</p>
+          <p className="mt-2 text-lg" suppressHydrationWarning>
+            {formatClockTime(now)}
+          </p>
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <div className="min-w-[760px] rounded-[1.45rem] border border-[var(--line)] bg-[var(--surface-strong)] p-4">
-          <div className="grid grid-cols-4 overflow-hidden rounded-[1rem] text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-            <div className="bg-slate-200/85 px-3 py-2">Night</div>
-            <div className="bg-amber-100/80 px-3 py-2">Morning</div>
-            <div className="bg-orange-100/80 px-3 py-2">Afternoon</div>
-            <div className="bg-sky-100/80 px-3 py-2">Evening</div>
+          <div className="grid grid-cols-4 overflow-hidden rounded-[1rem] text-xs uppercase tracking-[0.2em]">
+            <div className="timeline-segment timeline-segment-night px-3 py-2">Night</div>
+            <div className="timeline-segment timeline-segment-morning px-3 py-2">Morning</div>
+            <div className="timeline-segment timeline-segment-afternoon px-3 py-2">Afternoon</div>
+            <div className="timeline-segment timeline-segment-evening px-3 py-2">Evening</div>
           </div>
 
           <div
@@ -355,12 +361,12 @@ export function TimeBlockTimeline({
               const width = Math.max(2.5, ((endMinutes - startMinutes) / 1440) * 100);
               const tone =
                 item.completed
-                  ? "bg-[var(--success)] text-white"
+                  ? "timeline-block-complete"
                   : status?.state === "active"
-                  ? "bg-[var(--success)] text-white"
-                  : item.priority === "priority"
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-stone-500 text-white";
+                    ? "timeline-block-active"
+                    : item.priority === "priority"
+                      ? "timeline-block-priority"
+                      : "timeline-block-secondary";
 
               const showOverlayForRect = (rect: DOMRect) => {
                 const { left: overlayLeft, top: overlayTop } = clampOverlay(
@@ -387,7 +393,7 @@ export function TimeBlockTimeline({
                     showOverlayForRect(event.currentTarget.getBoundingClientRect())
                   }
                   onBlur={() => setOverlay(null)}
-                  className={`absolute z-10 overflow-visible rounded-xl px-3 py-2 shadow-[0_10px_24px_rgba(61,44,32,0.12)] outline-none ${tone}`}
+                  className={`timeline-block absolute z-10 overflow-visible rounded-xl px-3 py-2 shadow-[0_10px_24px_rgba(61,44,32,0.12)] outline-none ${tone}`}
                   style={{
                     left: `${left}%`,
                     top: `${14 + lane * 64}px`,
@@ -442,10 +448,10 @@ export function TimeBlockTimeline({
             item.completed
               ? "bg-[var(--success-soft)] text-[var(--success)]"
               : status?.state === "active"
-              ? "bg-[var(--success-soft)] text-[var(--success)]"
+                ? "bg-[var(--success-soft)] text-[var(--success)]"
               : status?.state === "upcoming"
                 ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                : "bg-stone-200 text-stone-600";
+                  : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]";
 
           return (
             <div
@@ -460,7 +466,7 @@ export function TimeBlockTimeline({
                       className={`rounded-full px-2 py-1 text-xs uppercase tracking-[0.18em] ${
                         item.priority === "priority"
                           ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                          : "bg-stone-200 text-stone-600"
+                          : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
                       }`}
                     >
                       {item.priority}
@@ -514,7 +520,7 @@ function RailStatusCard({
           className={`rounded-full px-2 py-1 text-xs uppercase tracking-[0.18em] ${
             item.priority === "priority"
               ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-              : "bg-stone-200 text-stone-600"
+              : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
           }`}
         >
           {item.priority}
@@ -524,7 +530,7 @@ function RailStatusCard({
         {item.startTime ? formatTimeRange(item.startTime, item.endTime) : "Time not set"}
       </p>
       <p className="mt-3 text-sm text-[var(--ink)]">{statusLabel}</p>
-      <div className="mt-4 h-2 rounded-full bg-stone-200">
+      <div className="mt-4 h-2 rounded-full bg-[var(--surface)]">
         <div
           className={`h-2 rounded-full transition-[width] ${
             eyebrow === "Now" ? "bg-[var(--success)]" : "bg-[var(--accent)]"
@@ -545,7 +551,7 @@ export function LiveTimeRail({
   items: PlannerItem[];
   children?: ReactNode;
 }) {
-  const now = useMinuteClock();
+  const now = useMinuteClock(date);
   const isToday = date === formatDateInput(now);
   const active = isToday ? getActiveTimeBlock(items, now) : undefined;
   const upcoming = isToday
@@ -554,7 +560,7 @@ export function LiveTimeRail({
 
   return (
     <div className="space-y-6 xl:sticky xl:top-6">
-      <section className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_12px_40px_rgba(61,44,32,0.05)] backdrop-blur">
+      <section className="planner-panel rounded-[1.75rem] p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
@@ -563,7 +569,9 @@ export function LiveTimeRail({
             <p className="mt-2 text-xl">{formatDisplayDateWithYear(date)}</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl">{formatClockTime(now)}</p>
+            <p className="text-3xl" suppressHydrationWarning>
+              {formatClockTime(now)}
+            </p>
             <p className="mt-1 text-sm text-[var(--muted)]">
               {isToday ? "Live on this device" : "Reference only"}
             </p>
@@ -632,7 +640,7 @@ export function DayNotesEditor({ date }: { date: string }) {
       }
       rows={5}
       placeholder="Write a quick note for the day: constraints, mindset, reminders."
-      className="w-full rounded-[1.25rem] border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--accent)]"
+      className="planner-field w-full rounded-[1.25rem] px-4 py-3 text-sm leading-6 outline-none"
     />
   );
 }
@@ -666,7 +674,7 @@ export function WeekStrip({ dates }: { dates: string[] }) {
               className={`mt-4 rounded-full px-3 py-2 text-xs uppercase tracking-[0.18em] ${
                 checkedIn
                   ? "bg-[var(--success-soft)] text-[var(--success)]"
-                  : "bg-stone-200 text-stone-600"
+                  : "border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
               }`}
             >
               {checkedIn ? "Checked in" : "Open"}
@@ -689,7 +697,7 @@ export function ReflectionEditor({ weekStart }: { weekStart: string }) {
       }
       rows={6}
       placeholder="What helped? What slipped? What should next week feel like?"
-      className="w-full rounded-[1.25rem] border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--accent)]"
+      className="planner-field w-full rounded-[1.25rem] px-4 py-3 text-sm leading-6 outline-none"
     />
   );
 }

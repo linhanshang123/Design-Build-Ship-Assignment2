@@ -17,10 +17,10 @@ export function NavLink({
   return (
     <Link
       href={href}
-      className={`rounded-full border px-4 py-2 text-sm transition ${
+      className={`planner-nav rounded-full border px-4 py-2 text-sm transition ${
         active
-          ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-          : "border-[var(--line)] bg-white/70 text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--ink)]"
+          ? "planner-nav-active"
+          : "planner-nav-inactive"
       }`}
     >
       {children}
